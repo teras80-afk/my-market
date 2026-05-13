@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface-2: #1c1c1c;
+    --border: #262626;
+    --text: #f5f5f0;
+    --text-dim: #888;
+    --text-faint: #555;
+    --up: #ff5a3c;
+    --down: #4a9eff;
+    --accent: #d4b896;
+    --night: #9d7fd4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(212,184,150,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(74,158,255,0.04) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  header {
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(26px, 5vw, 38px);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  h1 .accent {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 400;
+  }
+  .meta {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: right;
+    line-height: 1.6;
+    letter-spacing: 0.05em;
+  }
+  .meta .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent);
+  }
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+  }
+
+  .section {
+    margin-bottom: 32px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-flag {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .section-flag.kr { color: var(--up); }
+  .section-flag.us { color: var(--down); }
+  .section-flag.fx { color: var(--accent); }
+  .section-flag.nt { color: var(--night); }
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .section-note {
+    font-size: 9px;
+    color: var(--text-faint);
+    font-style: italic;
+    margin-left: 6px;
+  }
+  .section-count {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px;
+    height: 100%;
+    background: var(--text-faint);
+    transition: background 0.3s;
+  }
+  .card.up::before { background: var(--up); }
+  .card.down::before { background: var(--down); }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .symbol {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .ticker {
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .price {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .price.up { color: var(--up); }
+  .price.down { color: var(--down); }
+
+  .pct {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .pct.up { color: var(--up); }
+  .pct.down { color: var(--down); }
+
+  .chart {
+    height: 32px;
+    width: 100%;
+    margin-top: 2px;
+  }
+  .chart svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .chart .line {
+    fill: none;
+    stroke-width: 1.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .chart .area {
+    opacity: 0.12;
+  }
+  .card.up .chart .line { stroke: var(--up); }
+  .card.up .chart .area { fill: var(--up); }
+  .card.down .chart .line { stroke: var(--down); }
+  .card.down .chart .area { fill: var(--down); }
+
+  .card-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+  .delta {
+    font-variant-numeric: tabular-nums;
+  }
+  .delta.up { color: var(--up); opacity: 0.7; }
+  .delta.down { color: var(--down); opacity: 0.7; }
+
+  .card.loading .price,
+  .card.loading .pct,
+  .card.loading .chart { opacity: 0.25; }
+  .card.error .price {
+    color: var(--text-faint);
+    font-size: 12px;
+  }
+  .card.error .pct,
+  .card.error .chart,
+  .card.error .delta { display: none; }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-faint);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    border-top: 1px solid var(--border);
+  }
+  footer .refresh-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 10px 24px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+  footer .refresh-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  footer .refresh-btn:active { transform: scale(0.98); }
+  footer .refresh-btn.refreshing {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 14px 14px; }
+    main { padding: 18px 14px 60px; }
+    .section { margin-bottom: 24px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .card { padding: 10px 11px; gap: 4px; }
+    .symbol { font-size: 12px; }
+    .price { font-size: 17px; }
+    .pct { font-size: 10px; }
+    .ticker { font-size: 8px; }
+    .chart { height: 26px; }
+    .section-flag { font-size: 17px; }
+    .section-title { font-size: 9px; letter-spacing: 0.2em; }
+    .section-note { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>My <span class="accent">Market</span></h1>
+    <div class="meta">
+      <div class="live"><span class="live-dot"></span>LIVE</div>
+      <div id="last-updated">—</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="section">
+    <div class="section-header">
+      <span class="section-flag kr">KR</span>
+      <span class="section-title">국내 지표</span>
+      <span class="section-count" id="count-kr"></span>
+    </div>
+    <div class="grid" id="grid-kr"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-flag us">US</span>
+      <span class="section-title">해외 지표</span>
+      <span class="section-count" id="count-us"></span>
+    </div>
+    <div class="grid" id="grid-us"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-flag nt">NT</span>
+      <span class="section-title">야간 프록시</span>
+      <span class="section-note">한국 야간 시장 흐름 가늠용</span>
+      <span class="section-count" id="count-night"></span>
+    </div>
+    <div class="grid" id="grid-night"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-flag fx">FX</span>
+      <span class="section-title">환율 · 금리</span>
+      <span class="section-count" id="count-misc"></span>
+    </div>
+    <div class="grid" id="grid-misc"></div>
+  </div>
+</main>
+
+<footer>
+  <button class="refresh-btn" id="refresh-btn">REFRESH</button>
+  <div>Data: Stooq · 15min delayed or end-of-day · Not for trading</div>
+</footer>
+
+<script>
+  // ============================================================
+  // 지표 설정 — 자유롭게 추가/삭제/순서변경 가능
+  // ============================================================
+  const INDICATORS = {
+    kr: [
+      { name: 'KOSPI',     ticker: '코스피',   symbol: '^kospi' },
+      { name: 'KOSDAQ',    ticker: '코스닥',   symbol: '^kosdaq' },
+    ],
+    us: [
+      { name: 'S&P 500',   ticker: 'SPX',     symbol: '^spx' },
+      { name: 'NASDAQ',    ticker: 'IXIC',    symbol: '^ndq' },
+      { name: 'Dow Jones', ticker: 'DJI',     symbol: '^dji' },
+      { name: 'NQ100 Fut', ticker: 'NQ=F',    symbol: 'nq.f' },
+      { name: 'PHLX Semi', ticker: 'SOX',     symbol: '^sox' },
+    ],
+    // 야간 프록시 — 한국 야간 시장 분위기 가늠용 대체 지표
+    night: [
+      { name: 'MSCI Korea ETF', ticker: 'EWY',   symbol: 'ewy.us' },
+      { name: 'S&P 500 Fut',    ticker: 'ES=F',  symbol: 'es.f' },
+    ],
+    misc: [
+      { name: 'USD/KRW',   ticker: '원/달러',    symbol: 'usdkrw' },
+      { name: 'US 10Y',    ticker: '미국채 10년', symbol: '10usy.b', isYield: true },
+    ],
+  };
+
+  async function fetchQuote(symbol) {
+    const url = `https://stooq.com/q/l/?s=${encodeURIComponent(symbol)}&f=sd2t2ohlcv&h&e=csv`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Network error');
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) throw new Error('No data');
+    const [, date, time, open, high, low, close, volume] = lines[1].split(',');
+    if (!close || close === 'N/D') throw new Error('No price');
+    return {
+      date, time,
+      open: parseFloat(open),
+      close: parseFloat(close),
+    };
+  }
+
+  async function fetchHistory(symbol) {
+    const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol)}&i=d`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('History network error');
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    const closes = lines.slice(1).map(l => parseFloat(l.split(',')[4])).filter(v => !isNaN(v));
+    return closes.slice(-30);
+  }
+
+  function formatPrice(value, isYield) {
+    if (isYield) return value.toFixed(3) + '%';
+    if (value >= 1000) {
+      return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return value.toFixed(2);
+  }
+
+  function buildSparkline(values) {
+    if (!values || values.length < 2) return '';
+    const W = 100, H = 100;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const step = W / (values.length - 1);
+    const points = values.map((v, i) => {
+      const x = i * step;
+      const y = H - ((v - min) / range) * H;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const line = `M ${points.join(' L ')}`;
+    const area = `M 0,${H} L ${points.join(' L ')} L ${W},${H} Z`;
+    return `
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <path class="area" d="${area}"/>
+        <path class="line" d="${line}" vector-effect="non-scaling-stroke"/>
+      </svg>
+    `;
+  }
+
+  function buildCard(ind) {
+    const id = 'card-' + ind.symbol.replace(/[^a-z0-9]/gi, '');
+    return `
+      <div class="card loading" id="${id}">
+        <div class="card-head">
+          <div class="symbol">${ind.name}</div>
+          <div class="ticker">${ind.ticker}</div>
+        </div>
+        <div class="price-row">
+          <span class="price">—</span>
+          <span class="pct">—</span>
+        </div>
+        <div class="chart"></div>
+        <div class="card-foot">
+          <span class="delta">—</span>
+          <span class="ts">—</span>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadIndicator(ind) {
+    const id = 'card-' + ind.symbol.replace(/[^a-z0-9]/gi, '');
+    const card = document.getElementById(id);
+    if (!card) return;
+
+    try {
+      const [data, history] = await Promise.all([
+        fetchQuote(ind.symbol),
+        fetchHistory(ind.symbol).catch(() => []),
+      ]);
+
+      const change = data.close - data.open;
+      const pct = (change / data.open) * 100;
+      const isUp = change >= 0;
+      const sign = isUp ? '+' : '';
+      const arrow = isUp ? '▲' : '▼';
+
+      card.classList.remove('loading', 'error');
+      card.classList.toggle('up', isUp);
+      card.classList.toggle('down', !isUp);
+
+      const priceEl = card.querySelector('.price');
+      priceEl.textContent = formatPrice(data.close, ind.isYield);
+      priceEl.classList.toggle('up', isUp);
+      priceEl.classList.toggle('down', !isUp);
+
+      const pctEl = card.querySelector('.pct');
+      pctEl.textContent = `${sign}${pct.toFixed(2)}%`;
+      pctEl.classList.toggle('up', isUp);
+      pctEl.classList.toggle('down', !isUp);
+
+      const deltaEl = card.querySelector('.delta');
+      deltaEl.textContent = `${arrow} ${sign}${formatPrice(Math.abs(change), ind.isYield)}`;
+      deltaEl.classList.toggle('up', isUp);
+      deltaEl.classList.toggle('down', !isUp);
+
+      card.querySelector('.ts').textContent = data.date;
+      card.querySelector('.chart').innerHTML = buildSparkline(history);
+    } catch (e) {
+      card.classList.remove('loading');
+      card.classList.add('error');
+      card.querySelector('.price').textContent = 'Unavailable';
+      card.querySelector('.ts').textContent = '';
+    }
+  }
+
+  function renderGrids() {
+    document.getElementById('grid-kr').innerHTML = INDICATORS.kr.map(buildCard).join('');
+    document.getElementById('grid-us').innerHTML = INDICATORS.us.map(buildCard).join('');
+    document.getElementById('grid-night').innerHTML = INDICATORS.night.map(buildCard).join('');
+    document.getElementById('grid-misc').innerHTML = INDICATORS.misc.map(buildCard).join('');
+    document.getElementById('count-kr').textContent = INDICATORS.kr.length + ' items';
+    document.getElementById('count-us').textContent = INDICATORS.us.length + ' items';
+    document.getElementById('count-night').textContent = INDICATORS.night.length + ' items';
+    document.getElementById('count-misc').textContent = INDICATORS.misc.length + ' items';
+  }
+
+  async function loadAll() {
+    const all = [
+      ...INDICATORS.kr,
+      ...INDICATORS.us,
+      ...INDICATORS.night,
+      ...INDICATORS.misc,
+    ];
+    await Promise.all(all.map(loadIndicator));
+    const now = new Date();
+    const stamp = now.toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    document.getElementById('last-updated').textContent = `Updated ${stamp}`;
+  }
+
+  document.getElementById('refresh-btn').addEventListener('click', async (e) => {
+    e.target.classList.add('refreshing');
+    e.target.textContent = 'LOADING...';
+    renderGrids();
+    await loadAll();
+    e.target.classList.remove('refreshing');
+    e.target.textContent = 'REFRESH';
+  });
+
+  renderGrids();
+  loadAll();
+  setInterval(loadAll, 5 * 60 * 1000);
+</script>
+
+</body>
+</html>
