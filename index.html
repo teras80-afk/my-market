@@ -115,6 +115,47 @@
   .section-flag.fx { color: var(--accent); }
   .section-flag.nt { color: var(--night); }
   .section-flag.stk { color: var(--stock); }
+
+  /* ============== 테마 탭 바 ============== */
+  .theme-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .theme-tabs::-webkit-scrollbar { display: none; }
+  .theme-tab {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 14px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .theme-tab:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+  .theme-tab.active {
+    background: var(--stock);
+    color: var(--bg);
+    border-color: var(--stock);
+  }
+  .theme-tab .count {
+    font-size: 9px;
+    opacity: 0.7;
+  }
   .section-title {
     font-size: 10px;
     letter-spacing: 0.25em;
@@ -536,6 +577,10 @@
     .section-title { font-size: 9px; letter-spacing: 0.2em; }
     .section-note { display: none; }
 
+    .theme-tabs { gap: 4px; margin-bottom: 10px; }
+    .theme-tab { padding: 6px 11px; font-size: 10px; gap: 5px; }
+    .theme-tab .count { font-size: 8px; }
+
     .modal-backdrop { padding: 8px; }
     .modal-head { padding: 14px 16px 12px; }
     .modal-name { font-size: 17px; }
@@ -602,9 +647,10 @@
     <div class="section-header">
       <span class="section-flag stk">STK</span>
       <span class="section-title">관심 종목</span>
-      <span class="section-note">국내·해외 개별 종목</span>
+      <span class="section-note">테마별 분류</span>
       <span class="section-count" id="count-stocks"></span>
     </div>
+    <div class="theme-tabs" id="theme-tabs"></div>
     <div class="grid" id="grid-stocks"></div>
   </div>
 </main>
@@ -679,18 +725,18 @@
     // ============================================================
     stocks: [
       // 한국 (KOSPI)
-      { name: '삼성전자',    ticker: '005930.KS', symbol: '005930.KS' },
-      { name: 'SK하이닉스',  ticker: '000660.KS', symbol: '000660.KS' },
-      { name: '현대차',      ticker: '005380.KS', symbol: '005380.KS' },
+      { name: '삼성전자',    ticker: '005930.KS', symbol: '005930.KS', theme: '반도체' },
+      { name: 'SK하이닉스',  ticker: '000660.KS', symbol: '000660.KS', theme: '반도체' },
+      { name: '현대차',      ticker: '005380.KS', symbol: '005380.KS', theme: '모빌리티' },
       // 미국 (NASDAQ)
-      { name: 'NVIDIA',     ticker: 'NVDA',      symbol: 'NVDA' },
-      { name: 'Intel',      ticker: 'INTC',      symbol: 'INTC' },
-      { name: 'Micron',     ticker: 'MU',        symbol: 'MU' },
-      { name: 'Microsoft',  ticker: 'MSFT',      symbol: 'MSFT' },
-      { name: 'Apple',      ticker: 'AAPL',      symbol: 'AAPL' },
-      { name: 'Alphabet',   ticker: 'GOOGL',     symbol: 'GOOGL' },
-      { name: 'Meta',       ticker: 'META',      symbol: 'META' },
-      { name: 'ARM',        ticker: 'ARM',       symbol: 'ARM' },
+      { name: 'NVIDIA',     ticker: 'NVDA',      symbol: 'NVDA',     theme: 'AI' },
+      { name: 'Intel',      ticker: 'INTC',      symbol: 'INTC',     theme: '반도체' },
+      { name: 'Micron',     ticker: 'MU',        symbol: 'MU',       theme: '반도체' },
+      { name: 'Microsoft',  ticker: 'MSFT',      symbol: 'MSFT',     theme: '빅테크' },
+      { name: 'Apple',      ticker: 'AAPL',      symbol: 'AAPL',     theme: '빅테크' },
+      { name: 'Alphabet',   ticker: 'GOOGL',     symbol: 'GOOGL',    theme: '빅테크' },
+      { name: 'Meta',       ticker: 'META',      symbol: 'META',     theme: '빅테크' },
+      { name: 'ARM',        ticker: 'ARM',       symbol: 'ARM',      theme: '반도체' },
     ],
   };
 
@@ -842,60 +888,114 @@
   async function loadIndicator(ind) {
     const id = 'card-' + ind.symbol.replace(/[^a-z0-9]/gi, '');
     const card = document.getElementById(id);
-    if (!card) return;
 
     try {
       const data = await fetchYahoo(ind.symbol, '1y');
       DATA_CACHE[ind.symbol] = data;
-
-      const price = data.price;
-      const prev = data.prevClose;
-      const change = price - prev;
-      const pct = (change / prev) * 100;
-      const isUp = change >= 0;
-      const sign = isUp ? '+' : '';
-      const arrow = isUp ? '▲' : '▼';
-
-      card.classList.remove('loading', 'error');
-      card.classList.toggle('up', isUp);
-      card.classList.toggle('down', !isUp);
-
-      const priceEl = card.querySelector('.price');
-      priceEl.textContent = formatPrice(price, ind.isYield);
-      priceEl.classList.toggle('up', isUp);
-      priceEl.classList.toggle('down', !isUp);
-
-      const pctEl = card.querySelector('.pct');
-      pctEl.textContent = `${sign}${pct.toFixed(2)}%`;
-      pctEl.classList.toggle('up', isUp);
-      pctEl.classList.toggle('down', !isUp);
-
-      const deltaEl = card.querySelector('.delta');
-      deltaEl.textContent = `${arrow} ${sign}${formatPrice(Math.abs(change), ind.isYield)}`;
-      deltaEl.classList.toggle('up', isUp);
-      deltaEl.classList.toggle('down', !isUp);
-
-      card.querySelector('.ts').textContent = data.date || '';
-
-      // 미니 스파크라인 (최근 30거래일)
-      const sparkValues = data.ohlc.slice(-30).map(d => d.close);
-      card.querySelector('.chart').innerHTML = buildSparkline(sparkValues);
-
-      // dataset에 저장 (모달에서 사용)
-      card.dataset.price = price;
-      card.dataset.prev = prev;
-      card.dataset.open = data.open ?? '';
-      card.dataset.high = data.high ?? '';
-      card.dataset.low = data.low ?? '';
-      card.dataset.pct = pct.toFixed(2);
-      card.dataset.up = isUp;
+      // 카드가 현재 DOM에 없을 수도 있음 (다른 테마 탭 활성 상태) — 캐시만 저장하고 끝
+      if (card) populateCard(card, ind, data);
     } catch (e) {
       console.error('Failed:', ind.symbol, e.message);
-      card.classList.remove('loading');
-      card.classList.add('error');
-      card.querySelector('.price').textContent = 'Unavailable';
-      card.querySelector('.ts').textContent = '';
+      if (card) {
+        card.classList.remove('loading');
+        card.classList.add('error');
+        card.querySelector('.price').textContent = 'Unavailable';
+        card.querySelector('.ts').textContent = '';
+      }
     }
+  }
+
+  // 현재 활성화된 테마 탭
+  let currentTheme = '전체';
+
+  function renderThemeTabs() {
+    // stocks의 theme 들을 모아서 unique 추출 (정의된 순서 보존)
+    const themes = [];
+    INDICATORS.stocks.forEach(s => {
+      if (s.theme && !themes.includes(s.theme)) themes.push(s.theme);
+    });
+
+    const tabs = ['전체', ...themes];
+    const tabsHTML = tabs.map(t => {
+      const count = t === '전체'
+        ? INDICATORS.stocks.length
+        : INDICATORS.stocks.filter(s => s.theme === t).length;
+      const active = t === currentTheme ? 'active' : '';
+      return `<button class="theme-tab ${active}" data-theme="${t}">${t}<span class="count">${count}</span></button>`;
+    }).join('');
+    document.getElementById('theme-tabs').innerHTML = tabsHTML;
+
+    // 탭 클릭 이벤트
+    document.querySelectorAll('.theme-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentTheme = tab.dataset.theme;
+        renderThemeTabs();
+        renderStocksGrid();
+      });
+    });
+  }
+
+  function renderStocksGrid() {
+    const filtered = currentTheme === '전체'
+      ? INDICATORS.stocks
+      : INDICATORS.stocks.filter(s => s.theme === currentTheme);
+
+    document.getElementById('grid-stocks').innerHTML = filtered.map(buildCard).join('');
+    document.getElementById('count-stocks').textContent = filtered.length + ' items';
+
+    // 새로 렌더된 카드에 클릭 이벤트 + 캐시된 데이터로 즉시 채우기
+    filtered.forEach(ind => {
+      const id = 'card-' + ind.symbol.replace(/[^a-z0-9]/gi, '');
+      const card = document.getElementById(id);
+      if (!card) return;
+      card.addEventListener('click', () => openModal(ind.symbol));
+
+      // DATA_CACHE 에 있으면 바로 그리기 (재페치 안 함)
+      const data = DATA_CACHE[ind.symbol];
+      if (data) populateCard(card, ind, data);
+    });
+  }
+
+  // 카드 채우는 공통 함수 (loadIndicator + renderStocksGrid에서 공유)
+  function populateCard(card, ind, data) {
+    const price = data.price;
+    const prev = data.prevClose;
+    const change = price - prev;
+    const pct = (change / prev) * 100;
+    const isUp = change >= 0;
+    const sign = isUp ? '+' : '';
+    const arrow = isUp ? '▲' : '▼';
+
+    card.classList.remove('loading', 'error');
+    card.classList.toggle('up', isUp);
+    card.classList.toggle('down', !isUp);
+
+    const priceEl = card.querySelector('.price');
+    priceEl.textContent = formatPrice(price, ind.isYield);
+    priceEl.classList.toggle('up', isUp);
+    priceEl.classList.toggle('down', !isUp);
+
+    const pctEl = card.querySelector('.pct');
+    pctEl.textContent = `${sign}${pct.toFixed(2)}%`;
+    pctEl.classList.toggle('up', isUp);
+    pctEl.classList.toggle('down', !isUp);
+
+    const deltaEl = card.querySelector('.delta');
+    deltaEl.textContent = `${arrow} ${sign}${formatPrice(Math.abs(change), ind.isYield)}`;
+    deltaEl.classList.toggle('up', isUp);
+    deltaEl.classList.toggle('down', !isUp);
+
+    card.querySelector('.ts').textContent = data.date || '';
+    const sparkValues = data.ohlc.slice(-30).map(d => d.close);
+    card.querySelector('.chart').innerHTML = buildSparkline(sparkValues);
+
+    card.dataset.price = price;
+    card.dataset.prev = prev;
+    card.dataset.open = data.open ?? '';
+    card.dataset.high = data.high ?? '';
+    card.dataset.low = data.low ?? '';
+    card.dataset.pct = pct.toFixed(2);
+    card.dataset.up = isUp;
   }
 
   function renderGrids() {
@@ -903,15 +1003,19 @@
     document.getElementById('grid-us').innerHTML = INDICATORS.us.map(buildCard).join('');
     document.getElementById('grid-night').innerHTML = INDICATORS.night.map(buildCard).join('');
     document.getElementById('grid-misc').innerHTML = INDICATORS.misc.map(buildCard).join('');
-    document.getElementById('grid-stocks').innerHTML = INDICATORS.stocks.map(buildCard).join('');
     document.getElementById('count-kr').textContent = INDICATORS.kr.length + ' items';
     document.getElementById('count-us').textContent = INDICATORS.us.length + ' items';
     document.getElementById('count-night').textContent = INDICATORS.night.length + ' items';
     document.getElementById('count-misc').textContent = INDICATORS.misc.length + ' items';
-    document.getElementById('count-stocks').textContent = INDICATORS.stocks.length + ' items';
 
-    document.querySelectorAll('.card').forEach(card => {
-      card.addEventListener('click', () => openModal(card.dataset.symbol));
+    renderThemeTabs();
+    renderStocksGrid();
+
+    // 지수 섹션 카드들 클릭 바인딩
+    ['grid-kr', 'grid-us', 'grid-night', 'grid-misc'].forEach(gridId => {
+      document.querySelectorAll(`#${gridId} .card`).forEach(card => {
+        card.addEventListener('click', () => openModal(card.dataset.symbol));
+      });
     });
   }
 
