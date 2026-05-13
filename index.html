@@ -360,12 +360,12 @@
 
 <footer>
   <button class="refresh-btn" id="refresh-btn">REFRESH</button>
-  <div>Data: Stooq · 15min delayed or end-of-day · Not for trading</div>
+  <div>Data: Stooq via proxy · Delayed · Not for trading</div>
 </footer>
 
 <script>
   // ============================================================
-  // 지표 설정 — 자유롭게 추가/삭제/순서변경 가능
+  // 지표 설정
   // ============================================================
   const INDICATORS = {
     kr: [
@@ -379,7 +379,6 @@
       { name: 'NQ100 Fut', ticker: 'NQ=F',    symbol: 'nq.f' },
       { name: 'PHLX Semi', ticker: 'SOX',     symbol: '^sox' },
     ],
-    // 야간 프록시 — 한국 야간 시장 분위기 가늠용 대체 지표
     night: [
       { name: 'MSCI Korea ETF', ticker: 'EWY',   symbol: 'ewy.us' },
       { name: 'S&P 500 Fut',    ticker: 'ES=F',  symbol: 'es.f' },
@@ -390,11 +389,35 @@
     ],
   };
 
+  // ============================================================
+  // CORS 프록시 — GitHub Pages 등 HTTPS 환경에서 Stooq 호출용
+  // 프록시가 작동 안 하면 다른 프록시로 자동 폴백
+  // ============================================================
+  const PROXIES = [
+    (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,
+  ];
+
+  async function fetchWithProxy(targetUrl) {
+    let lastErr;
+    for (const wrap of PROXIES) {
+      try {
+        const res = await fetch(wrap(targetUrl));
+        if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+        const text = await res.text();
+        if (!text || text.length < 5) { lastErr = new Error('Empty'); continue; }
+        return text;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error('All proxies failed');
+  }
+
   async function fetchQuote(symbol) {
-    const url = `https://stooq.com/q/l/?s=${encodeURIComponent(symbol)}&f=sd2t2ohlcv&h&e=csv`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Network error');
-    const text = await res.text();
+    const target = `https://stooq.com/q/l/?s=${encodeURIComponent(symbol)}&f=sd2t2ohlcv&h&e=csv`;
+    const text = await fetchWithProxy(target);
     const lines = text.trim().split('\n');
     if (lines.length < 2) throw new Error('No data');
     const [, date, time, open, high, low, close, volume] = lines[1].split(',');
@@ -407,10 +430,8 @@
   }
 
   async function fetchHistory(symbol) {
-    const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol)}&i=d`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('History network error');
-    const text = await res.text();
+    const target = `https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol)}&i=d`;
+    const text = await fetchWithProxy(target);
     const lines = text.trim().split('\n');
     if (lines.length < 2) return [];
     const closes = lines.slice(1).map(l => parseFloat(l.split(',')[4])).filter(v => !isNaN(v));
@@ -507,6 +528,7 @@
       card.querySelector('.ts').textContent = data.date;
       card.querySelector('.chart').innerHTML = buildSparkline(history);
     } catch (e) {
+      console.error('Failed to load', ind.symbol, e);
       card.classList.remove('loading');
       card.classList.add('error');
       card.querySelector('.price').textContent = 'Unavailable';
