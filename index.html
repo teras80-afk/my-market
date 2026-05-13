@@ -20,6 +20,7 @@
     --down: #4a9eff;
     --accent: #d4b896;
     --night: #9d7fd4;
+    --stock: #5fb878;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -113,6 +114,7 @@
   .section-flag.us { color: var(--down); }
   .section-flag.fx { color: var(--accent); }
   .section-flag.nt { color: var(--night); }
+  .section-flag.stk { color: var(--stock); }
   .section-title {
     font-size: 10px;
     letter-spacing: 0.25em;
@@ -595,6 +597,16 @@
     </div>
     <div class="grid" id="grid-misc"></div>
   </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-flag stk">STK</span>
+      <span class="section-title">관심 종목</span>
+      <span class="section-note">국내·해외 개별 종목</span>
+      <span class="section-count" id="count-stocks"></span>
+    </div>
+    <div class="grid" id="grid-stocks"></div>
+  </div>
 </main>
 
 <footer>
@@ -659,9 +671,30 @@
       { name: 'USD/KRW',   ticker: '원/달러',    symbol: 'KRW=X' },
       { name: 'US 10Y',    ticker: '미국채 10년', symbol: '^TNX', isYield: true },
     ],
+    // ============================================================
+    // 관심 종목 — 국내/해외 상관없이 자유롭게 추가
+    // 한국 코스피: 종목코드.KS  (예: '005930.KS' = 삼성전자)
+    // 한국 코스닥: 종목코드.KQ  (예: '091990.KQ' = 셀트리온헬스케어)
+    // 미국 주식: 티커 (예: 'NVDA', 'AAPL')
+    // ============================================================
+    stocks: [
+      // 한국 (KOSPI)
+      { name: '삼성전자',    ticker: '005930.KS', symbol: '005930.KS' },
+      { name: 'SK하이닉스',  ticker: '000660.KS', symbol: '000660.KS' },
+      { name: '현대차',      ticker: '005380.KS', symbol: '005380.KS' },
+      // 미국 (NASDAQ)
+      { name: 'NVIDIA',     ticker: 'NVDA',      symbol: 'NVDA' },
+      { name: 'Intel',      ticker: 'INTC',      symbol: 'INTC' },
+      { name: 'Micron',     ticker: 'MU',        symbol: 'MU' },
+      { name: 'Microsoft',  ticker: 'MSFT',      symbol: 'MSFT' },
+      { name: 'Apple',      ticker: 'AAPL',      symbol: 'AAPL' },
+      { name: 'Alphabet',   ticker: 'GOOGL',     symbol: 'GOOGL' },
+      { name: 'Meta',       ticker: 'META',      symbol: 'META' },
+      { name: 'ARM',        ticker: 'ARM',       symbol: 'ARM' },
+    ],
   };
 
-  const ALL = [...INDICATORS.kr, ...INDICATORS.us, ...INDICATORS.night, ...INDICATORS.misc];
+  const ALL = [...INDICATORS.kr, ...INDICATORS.us, ...INDICATORS.night, ...INDICATORS.misc, ...INDICATORS.stocks];
   const BY_SYMBOL = Object.fromEntries(ALL.map(i => [i.symbol, i]));
 
   // ============================================================
@@ -870,10 +903,12 @@
     document.getElementById('grid-us').innerHTML = INDICATORS.us.map(buildCard).join('');
     document.getElementById('grid-night').innerHTML = INDICATORS.night.map(buildCard).join('');
     document.getElementById('grid-misc').innerHTML = INDICATORS.misc.map(buildCard).join('');
+    document.getElementById('grid-stocks').innerHTML = INDICATORS.stocks.map(buildCard).join('');
     document.getElementById('count-kr').textContent = INDICATORS.kr.length + ' items';
     document.getElementById('count-us').textContent = INDICATORS.us.length + ' items';
     document.getElementById('count-night').textContent = INDICATORS.night.length + ' items';
     document.getElementById('count-misc').textContent = INDICATORS.misc.length + ' items';
+    document.getElementById('count-stocks').textContent = INDICATORS.stocks.length + ' items';
 
     document.querySelectorAll('.card').forEach(card => {
       card.addEventListener('click', () => openModal(card.dataset.symbol));
