@@ -451,6 +451,36 @@
   .modal-chart .candle-up { fill: var(--up); stroke: var(--up); }
   .modal-chart .candle-down { fill: var(--down); stroke: var(--down); }
   .modal-chart .wick { stroke-width: 1; }
+  .modal-chart .ma-line {
+    fill: none;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .modal-chart .ma-20 { stroke: #d4b896; }      /* 베이지 (accent) */
+  .modal-chart .ma-60 { stroke: #9d7fd4; }      /* 보라 */
+  .modal-chart .ma-120 { stroke: #4a9eff; }     /* 파랑 */
+  .ma-legend {
+    display: flex;
+    gap: 14px;
+    padding: 0 4px 8px;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    flex-wrap: wrap;
+  }
+  .ma-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ma-legend-line {
+    width: 16px;
+    height: 2px;
+  }
+  .ma-legend-line.ma-20 { background: #d4b896; }
+  .ma-legend-line.ma-60 { background: #9d7fd4; }
+  .ma-legend-line.ma-120 { background: #4a9eff; }
   .modal-loading {
     flex: 1;
     display: flex;
@@ -591,6 +621,7 @@
       <button class="range-btn" data-range="1Y">1Y</button>
     </div>
     <div class="modal-chart-wrap">
+      <div class="ma-legend" id="ma-legend"></div>
       <div class="modal-chart" id="modal-chart">
         <div class="modal-loading">LOADING...</div>
       </div>
@@ -686,21 +717,38 @@
       ohlc.push({ date, open: o, high: h, low: l, close: c });
     }
 
-    // 현재가 정보 (오늘 시가/고가/저가/현재가)
+    // 현재가 정보
     const last = ohlc[ohlc.length - 1] || {};
+    const prevDay = ohlc[ohlc.length - 2] || {};
     const regularPrice = meta.regularMarketPrice ?? last.close;
-    const prevClose = meta.chartPreviousClose ?? meta.previousClose;
+    // ⚠️ meta.chartPreviousClose 는 range 시작점 종가(1년 전)이므로 사용 X
+    // 실제 "전일 종가"는 ohlc 배열의 마지막에서 두 번째 일봉의 close
+    const prevClose = prevDay.close ?? last.open;
 
-    // 일중 등락은 전일종가 기준으로 계산 (시가-종가가 아니라 전일종가-현재가)
     return {
       price: regularPrice,
-      open: meta.regularMarketDayLow != null ? last.open : last.open,
+      open: meta.regularMarketOpen ?? last.open,
       high: meta.regularMarketDayHigh ?? last.high,
       low: meta.regularMarketDayLow ?? last.low,
       prevClose: prevClose,
       date: last.date,
       ohlc: ohlc,
     };
+  }
+
+  // ============================================================
+  // 단순 이동평균(SMA) 계산
+  // ============================================================
+  function calcSMA(values, period) {
+    if (!values || values.length < period) return [];
+    const result = new Array(values.length).fill(null);
+    let sum = 0;
+    for (let i = 0; i < values.length; i++) {
+      sum += values[i];
+      if (i >= period) sum -= values[i - period];
+      if (i >= period - 1) result[i] = sum / period;
+    }
+    return result;
   }
 
   function formatPrice(value, isYield) {
@@ -849,11 +897,38 @@
     return { '1M': 22, '3M': 66, '1Y': 252 }[r] || 66;
   }
 
-  function drawCandleChart(ohlc, isYield) {
+  function drawCandleChart(fullOhlc, sliceStart, isYield, range) {
     const chartEl = document.getElementById('modal-chart');
-    if (!ohlc || ohlc.length === 0) {
+    const legendEl = document.getElementById('ma-legend');
+    if (!fullOhlc || fullOhlc.length === 0) {
       chartEl.innerHTML = `<div class="modal-empty">차트 데이터가 없습니다.</div>`;
+      if (legendEl) legendEl.innerHTML = '';
       return;
+    }
+
+    // 표시 범위
+    const ohlc = fullOhlc.slice(sliceStart);
+
+    // 어떤 이평선을 보여줄지 (기간에 따라)
+    const maConfig = {
+      '1M':  [{ period: 20, cls: 'ma-20' }],
+      '3M':  [{ period: 20, cls: 'ma-20' }, { period: 60, cls: 'ma-60' }],
+      '1Y':  [{ period: 20, cls: 'ma-20' }, { period: 60, cls: 'ma-60' }, { period: 120, cls: 'ma-120' }],
+    };
+    const mas = maConfig[range] || maConfig['3M'];
+
+    // 전체 종가로 이평선 계산 (정확도)
+    const fullCloses = fullOhlc.map(d => d.close);
+    const maSeries = mas.map(m => ({
+      ...m,
+      values: calcSMA(fullCloses, m.period).slice(sliceStart),
+    }));
+
+    // 범례 업데이트
+    if (legendEl) {
+      legendEl.innerHTML = mas.map(m => 
+        `<span class="ma-legend-item"><span class="ma-legend-line ${m.cls}"></span>MA${m.period}</span>`
+      ).join('');
     }
 
     const W = 800, H = 360;
@@ -861,8 +936,17 @@
     const innerW = W - margin.left - margin.right;
     const innerH = H - margin.top - margin.bottom;
 
-    const min = Math.min(...ohlc.map(d => d.low));
-    const max = Math.max(...ohlc.map(d => d.high));
+    // Y축 범위 — 캔들 + 이평선 모두 포함
+    let min = Math.min(...ohlc.map(d => d.low));
+    let max = Math.max(...ohlc.map(d => d.high));
+    maSeries.forEach(ma => {
+      ma.values.forEach(v => {
+        if (v != null) {
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+      });
+    });
     const pad = (max - min) * 0.08;
     const yMin = min - pad;
     const yMax = max + pad;
@@ -906,10 +990,26 @@
       candles += `<rect class="${cls}" x="${x - candleW/2}" y="${bodyTop}" width="${candleW}" height="${bodyH}"/>`;
     });
 
+    // 이평선 그리기
+    let maLines = '';
+    maSeries.forEach(ma => {
+      const pts = [];
+      ma.values.forEach((v, i) => {
+        if (v == null) return;
+        const x = margin.left + step * i + step / 2;
+        const y = yScale(v);
+        pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+      });
+      if (pts.length > 1) {
+        maLines += `<path class="ma-line ${ma.cls}" d="M ${pts.join(' L ')}"/>`;
+      }
+    });
+
     chartEl.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
         ${gridLines}
         ${candles}
+        ${maLines}
         ${yLabels}
         ${xLabels}
       </svg>
@@ -963,8 +1063,8 @@
     }
 
     const days = rangeToDays(currentRange);
-    const sliced = data.ohlc.slice(-days);
-    drawCandleChart(sliced, ind.isYield);
+    const sliceStart = Math.max(0, data.ohlc.length - days);
+    drawCandleChart(data.ohlc, sliceStart, ind.isYield, currentRange);
   }
 
   function closeModal() {
