@@ -148,10 +148,15 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
   .card:hover {
     border-color: var(--accent);
     transform: translateY(-1px);
+  }
+  .card:active {
+    transform: scale(0.98);
   }
   .card::before {
     content: '';
@@ -290,6 +295,200 @@
     pointer-events: none;
   }
 
+  /* ============== 모달 (확대 캔들차트) ============== */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .modal-backdrop.open {
+    display: flex;
+    opacity: 1;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.96);
+    transition: transform 0.2s;
+  }
+  .modal-backdrop.open .modal {
+    transform: scale(1);
+  }
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+  }
+  .modal-title {
+    flex: 1;
+    min-width: 0;
+  }
+  .modal-name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .modal-ticker {
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.15em;
+  }
+  .modal-price {
+    text-align: right;
+  }
+  .modal-price-main {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 4px;
+  }
+  .modal-price-main.up { color: var(--up); }
+  .modal-price-main.down { color: var(--down); }
+  .modal-price-pct {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .modal-price-pct.up { color: var(--up); }
+  .modal-price-pct.down { color: var(--down); }
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 32px;
+    height: 32px;
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .modal-close:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .modal-controls {
+    display: flex;
+    gap: 6px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .range-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .range-btn:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+  .range-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  .modal-chart-wrap {
+    padding: 20px 24px;
+    flex: 1;
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-chart {
+    flex: 1;
+    width: 100%;
+    min-height: 300px;
+    position: relative;
+  }
+  .modal-chart svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .modal-chart .axis-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    fill: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+  .modal-chart .grid-line {
+    stroke: var(--border);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+  }
+  .modal-chart .candle-up { fill: var(--up); stroke: var(--up); }
+  .modal-chart .candle-down { fill: var(--down); stroke: var(--down); }
+  .modal-chart .wick { stroke-width: 1; }
+  .modal-loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+  }
+  .modal-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    font-size: 11px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .modal-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 14px 24px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+  }
+  .stat-label {
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+    margin-bottom: 3px;
+  }
+  .stat-value {
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
   @media (max-width: 600px) {
     header { padding: 20px 14px 14px; }
     main { padding: 18px 14px 60px; }
@@ -304,6 +503,16 @@
     .section-flag { font-size: 17px; }
     .section-title { font-size: 9px; letter-spacing: 0.2em; }
     .section-note { display: none; }
+
+    .modal-backdrop { padding: 8px; }
+    .modal-head { padding: 14px 16px 12px; }
+    .modal-name { font-size: 17px; }
+    .modal-price-main { font-size: 20px; }
+    .modal-controls { padding: 10px 16px; gap: 4px; }
+    .range-btn { padding: 5px 10px; font-size: 9px; }
+    .modal-chart-wrap { padding: 14px 12px; min-height: 280px; }
+    .modal-chart { min-height: 240px; }
+    .modal-stats { padding: 12px 16px 16px; gap: 8px; font-size: 9px; }
   }
 </style>
 </head>
@@ -363,6 +572,39 @@
   <div>Data: Stooq via proxy · Delayed · Not for trading</div>
 </footer>
 
+<!-- 모달 -->
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">
+        <div class="modal-name" id="modal-name">—</div>
+        <div class="modal-ticker" id="modal-ticker">—</div>
+      </div>
+      <div class="modal-price">
+        <div class="modal-price-main" id="modal-price">—</div>
+        <div class="modal-price-pct" id="modal-pct">—</div>
+      </div>
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-controls">
+      <button class="range-btn" data-range="1M">1M</button>
+      <button class="range-btn active" data-range="3M">3M</button>
+      <button class="range-btn" data-range="1Y">1Y</button>
+    </div>
+    <div class="modal-chart-wrap">
+      <div class="modal-chart" id="modal-chart">
+        <div class="modal-loading">LOADING...</div>
+      </div>
+    </div>
+    <div class="modal-stats">
+      <div><div class="stat-label">OPEN</div><div class="stat-value" id="stat-open">—</div></div>
+      <div><div class="stat-label">HIGH</div><div class="stat-value" id="stat-high">—</div></div>
+      <div><div class="stat-label">LOW</div><div class="stat-value" id="stat-low">—</div></div>
+      <div><div class="stat-label">CLOSE</div><div class="stat-value" id="stat-close">—</div></div>
+    </div>
+  </div>
+</div>
+
 <script>
   // ============================================================
   // 지표 설정
@@ -389,9 +631,12 @@
     ],
   };
 
+  // 전체 indicator 평탄화 + symbol 기준 lookup
+  const ALL = [...INDICATORS.kr, ...INDICATORS.us, ...INDICATORS.night, ...INDICATORS.misc];
+  const BY_SYMBOL = Object.fromEntries(ALL.map(i => [i.symbol, i]));
+
   // ============================================================
-  // CORS 프록시 — GitHub Pages 등 HTTPS 환경에서 Stooq 호출용
-  // 프록시가 작동 안 하면 다른 프록시로 자동 폴백
+  // CORS 프록시 폴백
   // ============================================================
   const PROXIES = [
     (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
@@ -408,9 +653,7 @@
         const text = await res.text();
         if (!text || text.length < 5) { lastErr = new Error('Empty'); continue; }
         return text;
-      } catch (e) {
-        lastErr = e;
-      }
+      } catch (e) { lastErr = e; }
     }
     throw lastErr || new Error('All proxies failed');
   }
@@ -425,17 +668,28 @@
     return {
       date, time,
       open: parseFloat(open),
+      high: parseFloat(high),
+      low: parseFloat(low),
       close: parseFloat(close),
     };
   }
 
-  async function fetchHistory(symbol) {
+  // OHLC 일봉 (스파크라인 + 캔들차트 공용)
+  async function fetchOHLC(symbol) {
     const target = `https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol)}&i=d`;
     const text = await fetchWithProxy(target);
     const lines = text.trim().split('\n');
     if (lines.length < 2) return [];
-    const closes = lines.slice(1).map(l => parseFloat(l.split(',')[4])).filter(v => !isNaN(v));
-    return closes.slice(-30);
+    return lines.slice(1).map(l => {
+      const [date, open, high, low, close] = l.split(',');
+      return {
+        date,
+        open: parseFloat(open),
+        high: parseFloat(high),
+        low: parseFloat(low),
+        close: parseFloat(close),
+      };
+    }).filter(d => !isNaN(d.close));
   }
 
   function formatPrice(value, isYield) {
@@ -471,7 +725,7 @@
   function buildCard(ind) {
     const id = 'card-' + ind.symbol.replace(/[^a-z0-9]/gi, '');
     return `
-      <div class="card loading" id="${id}">
+      <div class="card loading" id="${id}" data-symbol="${ind.symbol}">
         <div class="card-head">
           <div class="symbol">${ind.name}</div>
           <div class="ticker">${ind.ticker}</div>
@@ -489,16 +743,21 @@
     `;
   }
 
+  // OHLC 캐시 (모달용)
+  const OHLC_CACHE = {};
+
   async function loadIndicator(ind) {
     const id = 'card-' + ind.symbol.replace(/[^a-z0-9]/gi, '');
     const card = document.getElementById(id);
     if (!card) return;
 
     try {
-      const [data, history] = await Promise.all([
+      const [data, ohlc] = await Promise.all([
         fetchQuote(ind.symbol),
-        fetchHistory(ind.symbol).catch(() => []),
+        fetchOHLC(ind.symbol).catch(() => []),
       ]);
+
+      OHLC_CACHE[ind.symbol] = ohlc;
 
       const change = data.close - data.open;
       const pct = (change / data.open) * 100;
@@ -526,9 +785,20 @@
       deltaEl.classList.toggle('down', !isUp);
 
       card.querySelector('.ts').textContent = data.date;
-      card.querySelector('.chart').innerHTML = buildSparkline(history);
+
+      // 스파크라인: 최근 30개 종가
+      const sparkValues = ohlc.slice(-30).map(d => d.close);
+      card.querySelector('.chart').innerHTML = buildSparkline(sparkValues);
+
+      // 최신 OHLC 정보를 카드에 저장 (모달에서 사용)
+      card.dataset.open = data.open;
+      card.dataset.high = data.high;
+      card.dataset.low = data.low;
+      card.dataset.close = data.close;
+      card.dataset.pct = pct.toFixed(2);
+      card.dataset.up = isUp;
     } catch (e) {
-      console.error('Failed to load', ind.symbol, e);
+      console.error('Failed:', ind.symbol, e);
       card.classList.remove('loading');
       card.classList.add('error');
       card.querySelector('.price').textContent = 'Unavailable';
@@ -545,20 +815,180 @@
     document.getElementById('count-us').textContent = INDICATORS.us.length + ' items';
     document.getElementById('count-night').textContent = INDICATORS.night.length + ' items';
     document.getElementById('count-misc').textContent = INDICATORS.misc.length + ' items';
+
+    // 카드 클릭 → 모달
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => openModal(card.dataset.symbol));
+    });
   }
 
   async function loadAll() {
-    const all = [
-      ...INDICATORS.kr,
-      ...INDICATORS.us,
-      ...INDICATORS.night,
-      ...INDICATORS.misc,
-    ];
-    await Promise.all(all.map(loadIndicator));
+    await Promise.all(ALL.map(loadIndicator));
     const now = new Date();
     const stamp = now.toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     document.getElementById('last-updated').textContent = `Updated ${stamp}`;
   }
+
+  // ============================================================
+  // 모달 + 캔들 차트
+  // ============================================================
+  let currentModalSymbol = null;
+  let currentRange = '3M';
+
+  function rangeToDays(r) {
+    return { '1M': 22, '3M': 66, '1Y': 252 }[r] || 66;
+  }
+
+  function drawCandleChart(ohlc, isYield) {
+    const chartEl = document.getElementById('modal-chart');
+    if (!ohlc || ohlc.length === 0) {
+      chartEl.innerHTML = `<div class="modal-empty">차트 데이터를 가져올 수 없습니다.<br>이 지표는 일부 프록시에서 차단될 수 있어요.</div>`;
+      return;
+    }
+
+    const W = 800, H = 360;
+    const margin = { top: 16, right: 50, bottom: 28, left: 12 };
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+
+    const min = Math.min(...ohlc.map(d => d.low));
+    const max = Math.max(...ohlc.map(d => d.high));
+    const pad = (max - min) * 0.08;
+    const yMin = min - pad;
+    const yMax = max + pad;
+    const yRange = yMax - yMin;
+
+    const n = ohlc.length;
+    const candleW = Math.max(2, innerW / n * 0.7);
+    const step = innerW / n;
+
+    const yScale = v => margin.top + innerH - ((v - yMin) / yRange) * innerH;
+
+    // Y축 격자/라벨 (5개)
+    const yTicks = 5;
+    let gridLines = '', yLabels = '';
+    for (let i = 0; i <= yTicks; i++) {
+      const v = yMin + (yRange * i / yTicks);
+      const y = yScale(v);
+      gridLines += `<line class="grid-line" x1="${margin.left}" y1="${y}" x2="${margin.left + innerW}" y2="${y}"/>`;
+      yLabels += `<text class="axis-text" x="${margin.left + innerW + 6}" y="${y + 3}">${formatPrice(v, isYield)}</text>`;
+    }
+
+    // X축 라벨 (시작/중간/끝)
+    let xLabels = '';
+    const xTickIdx = [0, Math.floor(n / 2), n - 1];
+    xTickIdx.forEach(i => {
+      const d = ohlc[i];
+      if (!d) return;
+      const x = margin.left + step * i + step / 2;
+      xLabels += `<text class="axis-text" x="${x}" y="${H - 8}" text-anchor="middle">${d.date}</text>`;
+    });
+
+    // 캔들
+    let candles = '';
+    ohlc.forEach((d, i) => {
+      const x = margin.left + step * i + step / 2;
+      const isUp = d.close >= d.open;
+      const cls = isUp ? 'candle-up' : 'candle-down';
+      const yHigh = yScale(d.high);
+      const yLow = yScale(d.low);
+      const yOpen = yScale(d.open);
+      const yClose = yScale(d.close);
+      const bodyTop = Math.min(yOpen, yClose);
+      const bodyH = Math.max(1, Math.abs(yOpen - yClose));
+      // 심지
+      candles += `<line class="wick ${cls}" x1="${x}" y1="${yHigh}" x2="${x}" y2="${yLow}"/>`;
+      // 몸통
+      candles += `<rect class="${cls}" x="${x - candleW/2}" y="${bodyTop}" width="${candleW}" height="${bodyH}"/>`;
+    });
+
+    chartEl.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        ${gridLines}
+        ${candles}
+        ${yLabels}
+        ${xLabels}
+      </svg>
+    `;
+  }
+
+  async function openModal(symbol) {
+    const ind = BY_SYMBOL[symbol];
+    if (!ind) return;
+
+    currentModalSymbol = symbol;
+    const card = document.querySelector(`.card[data-symbol="${symbol}"]`);
+
+    // 헤더 정보 채우기
+    document.getElementById('modal-name').textContent = ind.name;
+    document.getElementById('modal-ticker').textContent = ind.ticker;
+
+    const close = parseFloat(card.dataset.close);
+    const isUp = card.dataset.up === 'true';
+    const pct = parseFloat(card.dataset.pct);
+    const sign = isUp ? '+' : '';
+
+    const priceEl = document.getElementById('modal-price');
+    priceEl.textContent = isNaN(close) ? '—' : formatPrice(close, ind.isYield);
+    priceEl.className = 'modal-price-main ' + (isUp ? 'up' : 'down');
+
+    const pctEl = document.getElementById('modal-pct');
+    pctEl.textContent = isNaN(pct) ? '—' : `${sign}${pct.toFixed(2)}%`;
+    pctEl.className = 'modal-price-pct ' + (isUp ? 'up' : 'down');
+
+    document.getElementById('stat-open').textContent = card.dataset.open ? formatPrice(parseFloat(card.dataset.open), ind.isYield) : '—';
+    document.getElementById('stat-high').textContent = card.dataset.high ? formatPrice(parseFloat(card.dataset.high), ind.isYield) : '—';
+    document.getElementById('stat-low').textContent = card.dataset.low ? formatPrice(parseFloat(card.dataset.low), ind.isYield) : '—';
+    document.getElementById('stat-close').textContent = card.dataset.close ? formatPrice(parseFloat(card.dataset.close), ind.isYield) : '—';
+
+    document.getElementById('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    await renderModalChart();
+  }
+
+  async function renderModalChart() {
+    const ind = BY_SYMBOL[currentModalSymbol];
+    if (!ind) return;
+    const chartEl = document.getElementById('modal-chart');
+    chartEl.innerHTML = `<div class="modal-loading">LOADING...</div>`;
+
+    let ohlc = OHLC_CACHE[currentModalSymbol];
+    if (!ohlc || ohlc.length === 0) {
+      try {
+        ohlc = await fetchOHLC(currentModalSymbol);
+        OHLC_CACHE[currentModalSymbol] = ohlc;
+      } catch (e) {
+        ohlc = [];
+      }
+    }
+
+    const days = rangeToDays(currentRange);
+    const sliced = ohlc.slice(-days);
+    drawCandleChart(sliced, ind.isYield);
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.body.style.overflow = '';
+    currentModalSymbol = null;
+  }
+
+  // 이벤트 바인딩
+  document.getElementById('modal').addEventListener('click', closeModal);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.querySelectorAll('.range-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentRange = btn.dataset.range;
+      await renderModalChart();
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
 
   document.getElementById('refresh-btn').addEventListener('click', async (e) => {
     e.target.classList.add('refreshing');
